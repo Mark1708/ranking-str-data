@@ -1,0 +1,15 @@
+# Build output
+target/
+
+# IDE
+.classpath
+.factorypath
+.project
+.settings/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
