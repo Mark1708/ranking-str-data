@@ -56,7 +56,8 @@ class HaplotypeRankerTest {
                 DataTypes.createStructField("DYS393", DataTypes.StringType, true)));
         var data = spark.createDataFrame(List.of(RowFactory.create("base", "1")), schema);
 
-        assertThatThrownBy(() -> new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "base", 30, null)))
+        assertThatThrownBy(
+                        () -> new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "base", 30, null)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("first column must be named Index");
     }
@@ -69,7 +70,8 @@ class HaplotypeRankerTest {
                 DataTypes.createStructField("DYS393", DataTypes.StringType, true)));
         var data = spark.createDataFrame(List.of(RowFactory.create("base", "1")), schema);
 
-        assertThatThrownBy(() -> new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "missing", 30, null)))
+        assertThatThrownBy(() ->
+                        new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "missing", 30, null)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Base haplotype not found");
     }
@@ -83,19 +85,23 @@ class HaplotypeRankerTest {
                 RowFactory.create("near", "11", "10"),
                 RowFactory.create("same", "10", "10"));
 
-        List<RankedEntry> result = new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "base", 30, null));
+        List<RankedEntry> result =
+                new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "base", 30, null));
 
         assertThat(result).extracting(RankedEntry::index).containsExactly("base", "same", "near", "far");
         assertThat(result.get(0).metrics().tmrca()).isZero();
-        assertThat(result.get(2).metrics().tmrca()).isLessThan(result.get(3).metrics().tmrca());
+        assertThat(result.get(2).metrics().tmrca())
+                .isLessThan(result.get(3).metrics().tmrca());
     }
 
     @Test
     @DisplayName("rank rejects duplicate Index values")
     void rank_duplicateIndex_throws() {
-        Dataset<Row> data = createDataFrame(RowFactory.create("base", "10", "10"), RowFactory.create("base", "11", "10"));
+        Dataset<Row> data =
+                createDataFrame(RowFactory.create("base", "10", "10"), RowFactory.create("base", "11", "10"));
 
-        assertThatThrownBy(() -> new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "base", 30, null)))
+        assertThatThrownBy(
+                        () -> new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "base", 30, null)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Duplicate Index values found")
                 .hasMessageContaining("base");
@@ -104,9 +110,11 @@ class HaplotypeRankerTest {
     @Test
     @DisplayName("rank rejects duplicate base haplotype")
     void rank_duplicateBaseHaplotype_throws() {
-        Dataset<Row> data = createDataFrame(RowFactory.create("base", "10", "10"), RowFactory.create("base", "10", "10"));
+        Dataset<Row> data =
+                createDataFrame(RowFactory.create("base", "10", "10"), RowFactory.create("base", "10", "10"));
 
-        assertThatThrownBy(() -> new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "base", 30, null)))
+        assertThatThrownBy(
+                        () -> new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "base", 30, null)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Duplicate Index values found")
                 .hasMessageContaining("base");
@@ -118,7 +126,8 @@ class HaplotypeRankerTest {
         Dataset<Row> data = createDataFrame(
                 RowFactory.create("base", "10", null, "20"), RowFactory.create("row", "11", "999", null));
 
-        List<RankedEntry> result = new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "base", 30, null));
+        List<RankedEntry> result =
+                new HaplotypeRanker().rank(data, new CommandLineOptions("unused.csv", "base", 30, null));
 
         assertThat(result).hasSize(2);
     }

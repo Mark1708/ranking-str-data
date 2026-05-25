@@ -48,9 +48,7 @@ class RankingApplicationTest {
         assertThat(generatedCells.subList(0, expectedCells.size())).isEqualTo(expectedCells);
         assertThat(generatedCells.subList(expectedCells.size(), generatedCells.size()))
                 .containsExactly(
-                        "TMRCA",
-                        "Average number of actual mutations(lambda)",
-                        "Average number of mutation steps(k)");
+                        "TMRCA", "Average number of actual mutations(lambda)", "Average number of mutation steps(k)");
     }
 
     private void assertRowMatchesGolden(String generated, String expected, int lineNumber) {

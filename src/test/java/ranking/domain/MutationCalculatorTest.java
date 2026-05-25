@@ -42,12 +42,7 @@ class MutationCalculatorTest {
             })
     @DisplayName("calculate returns expected metrics for multiple locus differences")
     void calculate_parameterizedCases(
-            String refLoci,
-            String compLoci,
-            int age,
-            double expectedTmrca,
-            double expectedLambda,
-            double expectedK) {
+            String refLoci, String compLoci, int age, double expectedTmrca, double expectedLambda, double expectedK) {
         MutationMetrics result = calculator.calculate(loci(refLoci), loci(compLoci), age);
 
         assertEquals(expectedTmrca, result.tmrca(), 0.001);

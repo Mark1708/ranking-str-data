@@ -87,8 +87,8 @@ class InputValidatorTest {
     @DisplayName("validate rejects invalid command line options")
     void validate_invalidInputs_throwsException(
             String pathToken, String haplotypeIndex, int averageAge, Double mutationRate) throws IOException {
-        CommandLineOptions options = new CommandLineOptions(
-                resolvePath(pathToken), haplotypeIndex, averageAge, mutationRate);
+        CommandLineOptions options =
+                new CommandLineOptions(resolvePath(pathToken), haplotypeIndex, averageAge, mutationRate);
 
         assertThatThrownBy(() -> InputValidator.validate(options)).isInstanceOf(IllegalArgumentException.class);
     }

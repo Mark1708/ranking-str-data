@@ -26,12 +26,13 @@ class RankedCsvWriterTest {
 
         List<String> header = splitCsvLine(Files.readAllLines(output).get(0));
 
-        assertThat(header).containsExactly(
-                "Index",
-                "DYS393",
-                "TMRCA",
-                "Average number of actual mutations(lambda)",
-                "Average number of mutation steps(k)");
+        assertThat(header)
+                .containsExactly(
+                        "Index",
+                        "DYS393",
+                        "TMRCA",
+                        "Average number of actual mutations(lambda)",
+                        "Average number of mutation steps(k)");
     }
 
     @Test
@@ -39,9 +40,11 @@ class RankedCsvWriterTest {
     void write_rowsHaveSameCellCountAsHeader() throws IOException {
         Path output = writer.write(inputPath(), headers(), List.of(row("base", "10"), row("near", "11")));
 
-        List<List<String>> lines = Files.readAllLines(output).stream().map(this::splitCsvLine).toList();
+        List<List<String>> lines =
+                Files.readAllLines(output).stream().map(this::splitCsvLine).toList();
 
-        assertThat(lines.subList(1, lines.size())).allSatisfy(row -> assertThat(row).hasSameSizeAs(lines.get(0)));
+        assertThat(lines.subList(1, lines.size()))
+                .allSatisfy(row -> assertThat(row).hasSameSizeAs(lines.get(0)));
     }
 
     @Test
@@ -73,7 +76,8 @@ class RankedCsvWriterTest {
     void write_linesEndWithTrailingSemicolon() throws IOException {
         Path output = writer.write(inputPath(), headers(), List.of(row("base", "10"), row("near", "11")));
 
-        assertThat(Files.readAllLines(output)).allSatisfy(line -> assertThat(line).endsWith(";"));
+        assertThat(Files.readAllLines(output))
+                .allSatisfy(line -> assertThat(line).endsWith(";"));
     }
 
     @ParameterizedTest(name = "tmrca={0}, lambda={1}, k={2}")
@@ -90,8 +94,8 @@ class RankedCsvWriterTest {
 
         List<String> cells = splitCsvLine(Files.readAllLines(output).get(1));
 
-        assertThat(cells).containsExactly(
-                "base", "10", Double.toString(tmrca), Double.toString(lambda), Double.toString(k));
+        assertThat(cells)
+                .containsExactly("base", "10", Double.toString(tmrca), Double.toString(lambda), Double.toString(k));
     }
 
     private String inputPath() {
