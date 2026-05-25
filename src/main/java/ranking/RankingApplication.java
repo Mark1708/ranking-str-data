@@ -37,9 +37,8 @@ public final class RankingApplication {
                 List<String> headers = new ArrayList<>(inputColumns);
                 headers.addAll(RankedCsvWriter.METRIC_COLUMNS);
 
-                List<List<String>> rows = rankedEntries.stream()
-                        .map(this::toOutputRow)
-                        .collect(Collectors.toUnmodifiableList());
+                List<List<String>> rows =
+                        rankedEntries.stream().map(this::toOutputRow).collect(Collectors.toUnmodifiableList());
 
                 new RankedCsvWriter().write(options.dataPath(), headers, rows);
                 printReport(data, rankedEntries, options.haplotypeIndex());
@@ -75,11 +74,13 @@ public final class RankingApplication {
         data.filter(org.apache.spark.sql.functions.col("Index").equalTo(haplotypeIndex))
                 .show(1, false);
         System.out.println("\nRanked data (top 10): ");
-        rankedEntries.stream().limit(10).forEach(entry -> System.out.printf(
-                "  %s: TMRCA=%.6f, lambda=%.6f, k=%.6f%n",
-                entry.index(),
-                entry.metrics().tmrca(),
-                entry.metrics().actualMutations(),
-                entry.metrics().observedMutations()));
+        rankedEntries.stream()
+                .limit(10)
+                .forEach(entry -> System.out.printf(
+                        "  %s: TMRCA=%.6f, lambda=%.6f, k=%.6f%n",
+                        entry.index(),
+                        entry.metrics().tmrca(),
+                        entry.metrics().actualMutations(),
+                        entry.metrics().observedMutations()));
     }
 }

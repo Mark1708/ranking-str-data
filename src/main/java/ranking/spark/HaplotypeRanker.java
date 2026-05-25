@@ -13,8 +13,8 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import ranking.cli.CommandLineOptions;
 import ranking.domain.MutationCalculator;
-import ranking.domain.MutationMetrics;
 import ranking.domain.MutationFormula;
+import ranking.domain.MutationMetrics;
 import ranking.domain.RankedEntry;
 
 public final class HaplotypeRanker {
@@ -53,10 +53,8 @@ public final class HaplotypeRanker {
     }
 
     private void validateNoDuplicateIndices(Dataset<Row> data) {
-        List<Row> duplicates = data.groupBy(INDEX_COLUMN)
-                .count()
-                .filter(col("count").gt(1))
-                .collectAsList();
+        List<Row> duplicates =
+                data.groupBy(INDEX_COLUMN).count().filter(col("count").gt(1)).collectAsList();
         if (!duplicates.isEmpty()) {
             String dupIndices = duplicates.stream()
                     .map(row -> row.isNullAt(0) ? "null" : row.getString(0))

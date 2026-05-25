@@ -9,8 +9,8 @@ import java.util.stream.Collectors;
 
 public final class RankedCsvWriter {
     private static final String OUTPUT_FILE_NAME = "RankedData.csv";
-    public static final List<String> METRIC_COLUMNS = List.of(
-            "TMRCA", "Average number of actual mutations(lambda)", "Average number of mutation steps(k)");
+    public static final List<String> METRIC_COLUMNS =
+            List.of("TMRCA", "Average number of actual mutations(lambda)", "Average number of mutation steps(k)");
 
     public Path write(String inputPath, List<String> headers, List<List<String>> rows) {
         Path outputPath = outputPathFor(inputPath);
