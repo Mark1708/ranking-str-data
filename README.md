@@ -1,118 +1,128 @@
 # ranking-str-data
 
-![Java](https://img.shields.io/badge/-Java-0a0a0a?style=for-the-badge&logo=Java) ![Spark](https://img.shields.io/badge/-Apache%20Spark-0a0a0a?style=for-the-badge&logo=Apache%20Spark)
+![Java 21](https://img.shields.io/badge/runtime-Java%2021-111827?style=for-the-badge&labelColor=111827&color=5b5ef4) ![Spark](https://img.shields.io/badge/data-Spark%204.1.2-111827?style=for-the-badge&labelColor=111827&color=5b5ef4) ![Maven](https://img.shields.io/badge/build-Maven-111827?style=for-the-badge&labelColor=111827&color=5b5ef4) ![Status](https://img.shields.io/badge/status-research%20CLI-111827?style=for-the-badge&labelColor=111827&color=5b5ef4)
 
 [Русская версия](README.ru.md)
 
+Local Java CLI for ranking Y-STR haplotypes against a selected base haplotype and appending TMRCA-related research metrics to a semicolon-separated CSV file.
+
+| Area | Details |
+| --- | --- |
+| Runtime | Java 21, Maven |
+| Entry point | `ranking.Main` |
+| Artifact | Maven `artifactId` `ranking`, final jar `target/ranking.jar` |
+| Data engine | Spark 4.1.2 with Scala 2.13, Hadoop 3.5.0 |
+| CLI parser | JCommander 1.82 |
+| Logging | Log4j 2.26.0 |
+| Test and QA setup | JUnit 6.1.0, AssertJ 3.27.7, JaCoCo 0.8.14, SpotBugs, FindSecBugs, Spotless |
+| Sample data | `assets/DataSet.csv`, `assets/RankedData.csv` |
+
 ## Goal
 
-CLI tool for evaluating TMRCA (Time to the Most Recent Common Ancestor) by Y-STR loci, then ranking haplotypes relative to a base haplotype. Built for a genetics research group.
+The project was built for a genetics research workflow. It reads Y-STR haplotype rows, compares each row with a uniquely selected base haplotype, computes research metrics, and writes a ranked CSV next to the input file.
 
-## Scope
+This is a local research tool, not a clinical or diagnostic system.
 
-- Reads CSV input with Y-STR haplotype data
-- Calculates genetic distances using Poisson distribution model
-- Ranks haplotypes by proximity to a specified base haplotype
-- Supports configurable average generation age parameter
-- Supports configurable mutation rate per locus per generation (`--mu` flag, default 0.0026)
+## Research model
 
-## Algorithm
+The code implements a linear Y-STR TMRCA calculation based on the Klyosov (2009a) method with back-mutation correction.
 
-The tool implements the Klyosov (2009a) linear method for Y-STR TMRCA estimation with back-mutation correction:
+1. `ASD = sum((ref_i - comp_i)^2) / n`, where `n` is the number of comparable loci.
+2. `TMRCA = averageAge * ASD / mutationRate`, reported in years.
+3. `lambda = mutationRate * T_generations`, where `T_generations = TMRCA / averageAge`.
+4. `k = (lambda / 2) * (1 + exp(-lambda))`, the Klyosov forward formula for observed mutation steps with back-mutation correction.
 
-1. **ASD** (Average Squared Distance): `ASD = sum((ref_i - comp_i)^2) / n` where n is the number of matching loci
-2. **TMRCA**: `T = averageAge * ASD / mutationRate` (years before present)
-3. **Lambda** (actual mutations): `lambda = mutationRate * T_generations` where `T_generations = T / averageAge`
-4. **K** (observed mutations, with back-mutation correction): `k = (lambda / 2) * (1 + exp(-lambda))` (Klyosov forward formula)
+The default mutation rate is `0.0026` per locus per generation, based on Ballantyne et al. 2010 as a weighted average across 186 Y-STR markers. It can be changed with `--mu`.
 
-**Default mutation rate**: 0.0026 per locus per generation (Ballantyne et al. 2010, weighted average across 186 Y-STR markers).
+## CLI usage
 
-**Output columns**: Index, Loci (matching count), TMRCA (years), Lambda (actual mutations), K (observed mutations with back-mutation correction).
-
-## Reproducibility
-
-**Prerequisites:** Java 21+, Maven
-
-**Build:**
+Build the executable jar:
 
 ```bash
 mvn clean package
 ```
 
-**Test:**
+Run with required flags:
 
 ```bash
-mvn clean test
+java -jar target/ranking.jar -p assets/DataSet.csv -i indexOfHaplotype -a averageAge
 ```
 
-**Run:**
+Run with a custom mutation rate:
 
 ```bash
-java -jar target/ranking.jar -p /path/to/DataSet.csv -i indexOfHaplotype -a averageAge
+java -jar target/ranking.jar -p assets/DataSet.csv -i indexOfHaplotype -a averageAge --mu 0.0024
 ```
 
-**With custom mutation rate:**
-
-```bash
-java -jar target/ranking.jar -p /path/to/DataSet.csv -i indexOfHaplotype -a averageAge --mu 0.0024
-```
-
-**Help:**
+Show help:
 
 ```bash
 java -jar target/ranking.jar -h
 ```
 
-**Input format:** CSV where the first column is named "Index", followed by locus names.
+Supported flags:
 
-Note: The first column should be named "Index", followed by the names of the loci.
+| Flag | Meaning |
+| --- | --- |
+| `-p`, `--path` | Path to the input CSV file |
+| `-i`, `--index` | `Index` value of the base haplotype |
+| `-a`, `--age` | Average generation age used in the TMRCA formula |
+| `--mu` | Mutation rate per locus per generation, default `0.0026` |
+| `-h`, `--help` | Print CLI help |
 
-## Input Assumptions
+## Reproducibility
 
-- Input data is semicolon-delimited CSV format
-- First column must be named "Index"
-- Locus values should be integer-like when present (numeric STR values)
-- Blank/null values are skipped pairwise during comparison
-- Base haplotype specified by index must exist in the input dataset
+The expected local build output is:
 
-## Dataset Size
-
-This tool processes semicolon-delimited CSV files with Y-STR haplotype data:
-
-- **Typical input**: 10-500 haplotypes, 20-100 loci per haplotype
-- **Memory**: The tool loads all data into memory for metric calculation. For datasets larger than 10,000 rows, ensure sufficient JVM heap (`-Xmx`)
-- **Spark mode**: Runs in `local[1]` mode. Spark provides CSV parsing infrastructure; metric calculation is performed in-memory on the driver
-
-If processing very large datasets (>100k rows), consider running on a Spark cluster with the thin-jar profile:
-
-```bash
-mvn clean package -Pthin-jar
-spark-submit --class ranking.Main target/ranking.jar -p /path/to/data.csv -i index -a 30
+```text
+target/ranking.jar
 ```
 
-## Example
+The jar is executable because the Maven assembly configuration points to `ranking.Main`, and the project final name is `ranking`.
 
-- Before ranking: [DataSet](https://github.com/Mark1708/ranking-str-data/blob/main/assets/DataSet.csv)
-- After ranking: [RankedDataSet](https://github.com/Mark1708/ranking-str-data/blob/main/assets/RankedData.csv)
+The application starts Spark in `local[1]` mode, disables the Spark UI, reads CSV rows through Spark, then loads all rows to the driver for ranking.
 
-## Screenshots
+Sample files:
 
-![Example 1](https://github.com/Mark1708/ranking-str-data/blob/main/assets/Exanple1.png?raw=true)
-![Example 2](https://github.com/Mark1708/ranking-str-data/blob/main/assets/Exanple2.png?raw=true)
-![Example 3](https://github.com/Mark1708/ranking-str-data/blob/main/assets/Exanple3.png?raw=true)
+- Input sample: [`assets/DataSet.csv`](assets/DataSet.csv)
+- Ranked sample: [`assets/RankedData.csv`](assets/RankedData.csv)
+
+Screenshots:
+
+![Example 1](assets/Exanple1.png)
+![Example 2](assets/Exanple2.png)
+![Example 3](assets/Exanple3.png)
+
+The filenames use the spelling currently present in the repository.
+
+## Inputs and outputs
+
+Input requirements:
+
+- CSV separator is a semicolon.
+- The first column must be exactly `Index`.
+- `Index` values must be unique. Duplicate values are rejected.
+- The base haplotype passed through `-i` or `--index` must exist exactly once.
+- Locus values must parse as integers when present.
+- Null or blank locus values are skipped pairwise during comparison.
+
+Output behavior:
+
+- The output file is named `RankedData.csv`.
+- It is written to the same directory as the input file.
+- Existing input columns are preserved.
+- The code appends these metrics: `TMRCA`, `Average number of actual mutations(lambda)`, `Average number of mutation steps(k)`.
 
 ## Limitations
 
-- Research/local CLI tool, not a production pipeline
-- Built for Spark 4.1.2 local mode with Log4j 2.26.0
-- Sample and golden outputs are behavior references, not production benchmarks
-- Genetic distance formulas are not clinically validated for diagnostic purposes
-- Formulas should not be modified without domain review and validation
-- Requires Java 21+ (LTS)
-- All CSV columns are read as strings to preserve data fidelity (leading zeros in Index, exact locus values)
-- Back-mutation correction formula assumes low mutation rates; accuracy degrades for lambda > 2
+- The formulas are research assumptions and are not clinically validated for diagnostic use.
+- Formula changes should be reviewed by a domain expert.
+- Spark is used in local `local[1]` mode for this CLI workflow.
+- Ranking loads all rows to the driver, so available JVM memory limits dataset size.
+- All CSV columns are read as strings before parsing metrics, which helps preserve exact `Index` values.
+- Back-mutation correction assumes low mutation rates. Accuracy degrades for larger `lambda` values.
 
-## Background reading
+## References
 
 - [TMRCA](https://en.wikipedia.org/wiki/Most_recent_common_ancestor)
 - [Poisson distribution](https://en.wikipedia.org/wiki/Poisson_distribution)
@@ -122,8 +132,4 @@ spark-submit --class ranking.Main target/ranking.jar -p /path/to/data.csv -i ind
 
 ## Status
 
-Finished research project.
-
----
-
-By [Mark Gurianov](https://mark1708.github.io/)
+Research/educational project. Results, dependencies, and runtime assumptions are documented for reproducibility, but the repository is not maintained as a packaged product.
