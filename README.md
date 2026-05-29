@@ -133,3 +133,7 @@ Output behavior:
 ## Status
 
 Research/educational project. Results, dependencies, and runtime assumptions are documented for reproducibility, but the repository is not maintained as a packaged product.
+
+## License
+
+[MIT](LICENSE)
